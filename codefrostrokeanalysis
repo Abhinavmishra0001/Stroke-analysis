@@ -1,0 +1,202 @@
+import pandas as pd
+import numpy as np
+
+# Visualization (for checks)
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Preprocessing
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+
+# Models
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+
+from sklearn.metrics import (
+    confusion_matrix,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    roc_curve
+)
+
+
+
+# Evaluation
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
+
+# Handling imbalance
+from imblearn.over_sampling import SMOTE
+
+df = pd.read_csv('/Users/abhinavmishra/Desktop/predictiveprojectdataset.csv')  # adjust path if needed
+df.head()
+
+df.info()
+df.isnull().sum()
+
+df['bmi'].fillna(df['bmi'].median(), inplace=True)
+df.isnull().sum()
+
+df.drop(columns=['id'], inplace=True)
+
+categorical_cols = [
+    'gender',
+    'ever_married',
+    'work_type',
+    'Residence_type',
+    'smoking_status'
+]
+le = LabelEncoder()
+
+for col in categorical_cols:
+    df[col] = le.fit_transform(df[col])
+df.head()
+
+X = df.drop('stroke', axis=1)
+y = df['stroke']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+smote = SMOTE(random_state=42)
+X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+y_train.value_counts(), y_train_resampled.value_counts()
+
+
+scaler = StandardScaler()
+
+X_train_scaled = scaler.fit_transform(X_train_resampled)
+X_test_scaled = scaler.transform(X_test)
+
+lr = LogisticRegression(max_iter=1000)
+lr.fit(X_train_scaled, y_train_resampled)
+
+y_pred_lr = lr.predict(X_test_scaled)
+print("Logistic Regression Accuracy:", accuracy_score(y_test, y_pred_lr))
+print(classification_report(y_test, y_pred_lr))
+
+dt = DecisionTreeClassifier(random_state=42)
+dt.fit(X_train_resampled, y_train_resampled)
+
+y_pred_dt = dt.predict(X_test)
+print("Decision Tree Accuracy:", accuracy_score(y_test, y_pred_dt))
+print(classification_report(y_test, y_pred_dt))
+
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train_scaled, y_train_resampled)
+
+y_pred_knn = knn.predict(X_test_scaled)
+print("KNN Accuracy:", accuracy_score(y_test, y_pred_knn))
+print(classification_report(y_test, y_pred_knn))
+
+nb = GaussianNB()
+nb.fit(X_train_scaled, y_train_resampled)
+
+y_pred_nb = nb.predict(X_test_scaled)
+print("Naive Bayes Accuracy:", accuracy_score(y_test, y_pred_nb))
+print(classification_report(y_test, y_pred_nb))
+
+model_metrics = {
+    "Model": ["Logistic Regression", "Decision Tree", "KNN", "Naive Bayes"],
+    
+    "Accuracy": [
+        accuracy_score(y_test, y_pred_lr),
+        accuracy_score(y_test, y_pred_dt),
+        accuracy_score(y_test, y_pred_knn),
+        accuracy_score(y_test, y_pred_nb)
+    ],
+    
+    "Precision": [
+        precision_score(y_test, y_pred_lr),
+        precision_score(y_test, y_pred_dt),
+        precision_score(y_test, y_pred_knn),
+        precision_score(y_test, y_pred_nb)
+    ],
+    
+    "Recall": [
+        recall_score(y_test, y_pred_lr),
+        recall_score(y_test, y_pred_dt),
+        recall_score(y_test, y_pred_knn),
+        recall_score(y_test, y_pred_nb)
+    ],
+    
+    "F1_Score": [
+        f1_score(y_test, y_pred_lr),
+        f1_score(y_test, y_pred_dt),
+        f1_score(y_test, y_pred_knn),
+        f1_score(y_test, y_pred_nb)
+    ]
+}
+
+results_df = pd.DataFrame(model_metrics)
+results_df.sort_values(by="Recall", ascending=False)
+
+cm_lr = confusion_matrix(y_test, y_pred_lr)
+
+sns.heatmap(cm_lr, annot=True, fmt="d", cmap="Blues")
+plt.title("Logistic Regression - Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+cm_dt = confusion_matrix(y_test, y_pred_dt)
+
+sns.heatmap(cm_dt, annot=True, fmt="d", cmap="Blues")
+plt.title("Decision Tree - Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+cm_knn = confusion_matrix(y_test, y_pred_knn)
+
+sns.heatmap(cm_knn, annot=True, fmt="d", cmap="Blues")
+plt.title("KNN - Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+cm_nb = confusion_matrix(y_test, y_pred_nb)
+
+sns.heatmap(cm_nb, annot=True, fmt="d", cmap="Blues")
+plt.title("Naive Bayes - Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+sns.barplot(
+    x="Model",
+    y="Recall",
+    data=results_df
+)
+plt.title("Recall Comparison Across Models")
+plt.xticks(rotation=30)
+plt.show()
+
+corr_matrix = df.corr()
+plt.figure(figsize=(12,8))
+sns.heatmap(
+    corr_matrix,
+    annot=True,
+    cmap="coolwarm",
+    fmt=".2f"
+)
+plt.title("Correlation Heatmap of Stroke Health Dataset")
+plt.show()
+
+sns.boxplot(x="stroke", y="age", data=df)
+plt.title("Age vs Stroke")
+plt.show()
+
+sns.boxplot(x="stroke", y="avg_glucose_level", data=df)
+plt.title("Average Glucose Level vs Stroke")
+plt.show()
+
+sns.boxplot(x="stroke", y="bmi", data=df)
+plt.title("BMI vs Stroke")
+plt.show()
