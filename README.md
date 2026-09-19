@@ -64,6 +64,8 @@ Built an end-to-end ML pipeline on 5K+ patient records, including data cleaning,
 
 ## Interview talking points
 
+For a plain-English walkthrough of the project, see [INTERVIEW_NOTES.md](INTERVIEW_NOTES.md).
+
 1. **Why not accuracy?** Only a small fraction of records are stroke cases; a model predicting “no stroke” for everyone would look highly accurate but be unhelpful. PR-AUC, recall and F1 reveal performance on the minority class.
 2. **Why class weights?** They make misclassifying a stroke case costlier during model fitting without inventing synthetic medical records.
 3. **Why use a pipeline?** Imputation, scaling and one-hot encoding are fit only on training data, preventing leakage into test metrics.
