@@ -1,0 +1,4 @@
+cluster,patients,average_age,average_glucose,average_bmi,observed_stroke_rate
+0,4400,39.91,102.16,28.41,3.0
+1,434,61.02,127.09,33.28,12.0
+2,276,68.19,136.82,30.32,17.0
